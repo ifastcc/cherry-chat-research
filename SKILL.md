@@ -1,15 +1,22 @@
 ---
 name: cherry-chat-research
-description: Conduct open-ended research on Cherry Studio chat history through the local /v1/history API. Use when the user wants a deep reading of one person's chat patterns, recent concerns, values, motives, personality texture, emotional pressures, or a report that helps them feel seen.
+description: Research Cherry Studio chat history through the local /v1/history API. Use when the user wants a deep, open-ended reading of one person's recent concerns, recurring themes, values, motives, personality texture, or shifts over time.
 ---
 
 # Cherry Chat Research
 
 This skill turns the model into a chat-history researcher.
-It is not a dashboard generator and not a fixed-schema analytics pipeline.
+It is not a dashboard generator, and it is not a fixed analytics pipeline.
 
-The goal is to study Cherry Studio history deeply enough that the final output feels insightful, alive, and personally meaningful.
-The report can be reflective, psychological, narrative, philosophical, or portrait-like as long as it is grounded in the actual chat record.
+The job is to study Cherry Studio history deeply enough that the final output feels specific, alive, and personally meaningful.
+The report can be reflective, psychological, narrative, philosophical, or portrait-like as long as it stays grounded in the actual chat record.
+
+## Compatibility
+
+This skill is built for the `ifastcc/cherry-studio` fork.
+It depends on that fork's local `/v1/history` API and connection-profile discovery.
+
+Official Cherry Studio does not expose the same history surface, so this skill should be treated as unsupported there.
 
 ## Inputs
 
@@ -141,7 +148,7 @@ Primary endpoints:
 ## Example
 
 ```bash
-python .agents/skills/cherry-chat-research/scripts/analyze_chat_history.py \
+python scripts/analyze_chat_history.py \
   --topic-limit 20 \
   --search "AI" \
   --search "焦虑" \

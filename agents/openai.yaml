@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cherry Chat Research"
+  short_description: "Study Cherry chat history deeply and turn it into a thoughtful reading, not a stats page"
+  default_prompt: "Research my Cherry Studio chat history like a serious observer. Read broadly, follow your own hunches, inspect transcripts, trace recurring concerns, and create whatever final form best fits the material."
