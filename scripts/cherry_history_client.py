@@ -34,7 +34,14 @@ class CherryHistoryClient:
         if not self.api_key:
             raise ValueError("CHERRY_API_KEY is required or Cherry connection profile could not be discovered")
 
-    def _request(self, path: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _request(
+        self,
+        path: str,
+        params: Optional[Dict[str, Any]] = None,
+        *,
+        method: str = "GET",
+        body: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         query = self._encode_query(params or {})
         url = f"{self.base_url}{path}"
         if query:
@@ -45,7 +52,12 @@ class CherryHistoryClient:
             "X-API-Key": self.api_key,
         }
 
-        request = urllib.request.Request(url, headers=headers, method="GET")
+        request_body: Optional[bytes] = None
+        if body is not None:
+            headers["Content-Type"] = "application/json"
+            request_body = json.dumps(body, ensure_ascii=False).encode("utf-8")
+
+        request = urllib.request.Request(url, data=request_body, headers=headers, method=method)
 
         for attempt in range(self.max_retries + 1):
             try:
@@ -80,8 +92,17 @@ class CherryHistoryClient:
     def list_messages(self, topic_id: str, **params: Any) -> Dict[str, Any]:
         return self._request(f"/history/topics/{urllib.parse.quote(topic_id, safe='')}/messages", params)
 
+    def list_all_messages(self, **params: Any) -> Dict[str, Any]:
+        return self._request("/history/messages", params)
+
     def get_message(self, message_id: str) -> Dict[str, Any]:
         return self._request(f"/history/messages/{urllib.parse.quote(message_id, safe='')}")
+
+    def get_message_context(self, message_id: str, **params: Any) -> Dict[str, Any]:
+        return self._request(f"/history/messages/{urllib.parse.quote(message_id, safe='')}/context", params)
+
+    def batch_get_messages(self, message_ids: Iterable[str]) -> Dict[str, Any]:
+        return self._request("/history/messages/batch", method="POST", body={"messageIds": list(message_ids)})
 
     def get_transcript_page(self, topic_id: str, **params: Any) -> Dict[str, Any]:
         return self._request(f"/history/topics/{urllib.parse.quote(topic_id, safe='')}/transcript", params)

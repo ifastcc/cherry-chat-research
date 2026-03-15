@@ -247,10 +247,18 @@ def render_search_markdown(query: str, payload: Dict[str, Any]) -> str:
                 f"- segmentId: `{annotations.get('segmentId', 'N/A')}`",
                 f"- roundId: `{annotations.get('roundId', 'N/A')}`",
                 "",
-                hit.get("snippet") or "_No snippet returned._",
-                "",
             ]
         )
+
+        main_text = safe_text(hit.get("mainText"))
+        if main_text:
+            lines.extend(["#### Main Text", "", main_text, ""])
+
+        snippet = safe_text(hit.get("snippet"))
+        if snippet:
+            lines.extend(["#### Search Snippet", "", snippet, ""])
+        elif not main_text:
+            lines.extend(["_No snippet returned._", ""])
 
     return "\n".join(lines)
 

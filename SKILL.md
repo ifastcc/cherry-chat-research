@@ -1,6 +1,6 @@
 ---
 name: cherry-chat-research
-description: Research Cherry Studio chat history through the local /v1/history API. Use when the user wants a deep, open-ended reading of one person's recent concerns, recurring themes, values, motives, personality texture, or shifts over time.
+description: Research Cherry Studio chat history through the local /v1/history API. Use when the user wants a deep, open-ended reading of one person's recent concerns, recurring themes, values, motives, personality texture, shifts over time, or an evidence-backed personal portrait.
 ---
 
 # Cherry Chat Research
@@ -11,22 +11,16 @@ It is not a dashboard generator, and it is not a fixed analytics pipeline.
 The job is to study Cherry Studio history deeply enough that the final output feels specific, alive, and personally meaningful.
 The report can be reflective, psychological, narrative, philosophical, or portrait-like as long as it stays grounded in the actual chat record.
 
-## Compatibility
+## Connection
 
-This skill is built for the `ifastcc/cherry-studio` fork.
-It depends on that fork's local `/v1/history` API and connection-profile discovery.
+Prefer Cherry Studio's local connection profile file.
+The helper client will try to auto-discover it automatically.
 
-Official Cherry Studio does not expose the same history surface, so this skill should be treated as unsupported there.
+If you need to override that behavior, use one of these:
 
-## Inputs
-
-These environment variables are optional overrides:
-
+- `CHERRY_API_CONNECTION_FILE=/absolute/path/to/api-server.json`
 - `CHERRY_API_BASE_URL=http://127.0.0.1:<port>/v1`
 - `CHERRY_API_KEY=<api key>`
-- `CHERRY_API_CONNECTION_FILE=/absolute/path/to/api-server.json`
-
-If they are absent, the helper client will try to auto-discover Cherry Studio's local connection profile file.
 
 ## Data Semantics
 
@@ -69,22 +63,64 @@ You may draw from lenses such as:
 These are interpretive lenses, not cages.
 Use them when they help the user feel understood.
 
-## Suggested Workflow
+If the user asks for a particular angle, follow it.
+If the user does not specify a frame, choose the lenses that seem most revealing for the material.
 
-This is a suggested research process, not a mandatory checklist.
+## Lens Library
 
-1. Start broad.
-   Look at the topic catalog to understand the terrain.
-2. Form hunches.
-   Notice what seems emotionally charged, repeated, unfinished, or recently active.
-3. Trace motifs.
-   Use search to follow recurring phrases, concerns, identities, or conflicts.
-4. Read closely.
-   Open transcripts around the promising areas and inspect the surrounding messages.
-5. Revise.
-   Look for counterexamples, shifts, or moments that complicate your first impression.
-6. Write.
-   Produce a report, portrait, essay, letter, or HTML artifact that feels truer than a dashboard.
+These are optional ways to read the material. They are prompts for attention, not fixed output sections.
+
+### Action and reflection
+
+- daily encouragement
+- action guidance
+- blind spot questions
+- theme extension
+- inner resources
+- counterintuitive insights
+- default insight
+
+### Self-awareness and relationships
+
+- recurring questions
+- key people
+- blind spots
+- friend view
+- director view
+- ACT
+- CBT
+- personality texture, including MBTI-style readings when useful and clearly tentative
+
+### Thinking and decisions
+
+- compounding loops
+- primary contradiction
+- value clarification
+- inversion
+- second-order thinking
+
+### Classic lenses
+
+- Charlie Munger
+- Aristotle and first principles
+- Seneca and the control dichotomy
+- Tasha Eurich and self-awareness
+
+Do not mechanically run through these.
+Pick the few that actually sharpen the reading.
+
+## Research Moves
+
+There is no mandatory sequence.
+Use the moves that fit the task.
+
+- Start broad with the topic catalog.
+- Search for motifs, repeated phrases, identities, worries, or names.
+- Read full transcripts where the material feels alive or emotionally charged.
+- Use context windows around important messages when a search hit is too thin by itself.
+- Pull several distant messages together when you need to compare evidence.
+- Look for shifts over time, not just repeated themes.
+- Revise the first impression when the record pushes back.
 
 ## Tone And Ambition
 
@@ -128,13 +164,27 @@ Do not assume a fixed dashboard layout or a fixed section list unless the materi
 
 ## API Surface
 
-Primary endpoints:
+Primary endpoints and what they are for:
 
 - `GET /history/topics`
+  - Topic catalog. Use this to understand the terrain before reading deeply.
 - `GET /history/topics/:topicId`
+  - Topic metadata. Useful when one topic already looks promising and you want the stable summary.
 - `GET /history/topics/:topicId/transcript`
+  - Full topic transcript with pagination. This is the main body-reading endpoint.
+- `GET /history/messages`
+  - Cross-topic message stream. Use this when you want to study a time window across multiple topics instead of staying inside one thread.
 - `GET /history/messages/:messageId`
+  - Full detail for one message.
+- `GET /history/messages/:messageId/context`
+  - A local context window around one message. Good for validating a search hit without loading the whole transcript.
+- `POST /history/messages/batch`
+  - Batch fetch multiple messages by id. Good when you already have several candidate evidence points and want to compare them together.
 - `GET /history/search/messages`
+  - Message-level search. Hits include both a snippet and the full `mainText`.
+
+Use these APIs as building blocks.
+Do not assume any single endpoint is the "correct" research path.
 
 ## Scripts
 

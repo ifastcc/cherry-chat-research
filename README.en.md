@@ -24,6 +24,7 @@ Typical uses:
 - studying recurring themes, tensions, motives, and changes over time
 - asking an agent to write a profile, essay, report, or reflective reading based on your chat history
 - exporting a research workspace for deeper reading
+- looking across multiple topics inside one time window instead of staying inside a single thread
 
 If all you want is a small dashboard with counts and keyword lists, this is probably not the right tool.
 
@@ -57,25 +58,50 @@ For example:
 - “Study my Cherry chat history from the last month and tell me what I keep circling around.”
 - “Write something closer to a character reading than a dashboard.”
 - “Look at my recent chats and tell me whether my interests or anxieties have shifted.”
+- “Read my recent history through values, contradictions, and important people.”
+
+In the normal case, you do not need to pick a framework first. The agent should decide which lenses are most useful.
+
+If you do want to steer the tone, keep it light:
+
+- “Make it more action-oriented.”
+- “Lean more toward self-awareness.”
+- “Focus more on relationships and important people.”
+- “Use a more philosophical lens.”
 
 This skill works best when the agent is allowed to explore. It can browse topics, search messages, inspect transcripts, and then decide what kind of output makes sense.
 
 ## Configuration
 
-By default, the skill tries to discover Cherry's local connection profile automatically.
+By default, the skill tries to discover Cherry's local connection file automatically.
 
-If that fails, set the API address and key yourself:
+If you want to override that, the cleanest option is to point at the connection file directly:
+
+```bash
+export CHERRY_API_CONNECTION_FILE=/absolute/path/to/api-server.json
+```
+
+If auto-discovery fails, or if you want to override everything manually, set the API address and key yourself:
 
 ```bash
 export CHERRY_API_BASE_URL=http://127.0.0.1:23333/v1
 export CHERRY_API_KEY=your_api_key
 ```
 
-You can also point directly at a connection file:
+## Which APIs The Skill Can Use
 
-```bash
-export CHERRY_API_CONNECTION_FILE=/absolute/path/to/api-server.json
-```
+The skill can draw on these endpoints when it needs them:
+
+- `GET /history/topics`
+- `GET /history/topics/:topicId`
+- `GET /history/topics/:topicId/transcript`
+- `GET /history/messages`
+- `GET /history/messages/:messageId`
+- `GET /history/messages/:messageId/context`
+- `POST /history/messages/batch`
+- `GET /history/search/messages`
+
+These are data primitives, not a fixed workflow. The agent is free to decide how to investigate and how to shape the final output.
 
 ## How To Check That It Works
 
