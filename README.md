@@ -10,7 +10,7 @@
 
 这个 skill 只支持 [`ifastcc/cherry-studio`](https://github.com/ifastcc/cherry-studio)。
 
-因为依赖这个 fork 提供的本地 `/v1/history` API 和连接配置文件自动发现。官方 Cherry Studio 没有这套接口，所以直接装这个 skill 是用不起来的。
+因为依赖这个 cherry studio 的 fork 版本 提供的本地 `/v1/history` API 。官方 Cherry Studio 没有这套接口，所以直接装这个 skill 是用不起来的。
 
 ## 它能拿来做什么
 
