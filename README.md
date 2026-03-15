@@ -55,22 +55,6 @@ npx skills add ifastcc/cherry-chat-research -a codex -a claude-code
 - “基于我的聊天历史写一份人物侧写的报告”
 - “看看我最近的兴趣、焦虑点和表达方式有没有变化。”
 
-## 配置
-
-默认情况下，skill 会自动读取 Cherry 的本地连接配置。
-
-如果自动发现失败，再手动指定：
-
-```bash
-export CHERRY_API_BASE_URL=http://127.0.0.1:23333/v1
-export CHERRY_API_KEY=your_api_key
-```
-
-也可以直接指定连接文件：
-
-```bash
-export CHERRY_API_CONNECTION_FILE=/absolute/path/to/api-server.json
-```
 
 ## License
 
