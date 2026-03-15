@@ -1,4 +1,4 @@
-# cherry-skills
+# cherry-chat-research
 
 Skills for the `ifastcc/cherry-studio` fork.
 
@@ -32,7 +32,7 @@ If that fails, you can still set the API address and key manually.
 ## Install
 
 ```bash
-npx skills add ifastcc/cherry-skills --skill cherry-chat-research -a codex -a claude-code
+npx skills add ifastcc/cherry-chat-research --skill cherry-chat-research -a codex -a claude-code
 ```
 
 ## Optional Manual Config
