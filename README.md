@@ -98,6 +98,54 @@ export CHERRY_API_KEY=your_api_key
 
 这些接口只是数据入口，不是固定研究流程。怎么查、先看哪里、最后写成什么样，都由 agent 根据任务自己决定。
 
+搜索接口现在支持这些常用参数：
+
+- `q`: 最简单的自由文本搜索
+- `phrase`: 精确短语
+- `allOf`: 多个词都要出现
+- `anyOf`: 多个词里命中任意一个
+- `exclude`: 排除噪音词
+- `sort=createdAt|relevance`
+- `order=asc|desc`
+- `deduplicate=true`
+
+搜索命中里会直接带：
+
+- `snippet`
+- `mainText`
+- `createdAt`
+- `annotations`
+
+如果开了去重，还会带：
+
+- `contentHash`
+- `duplicateCount`
+- `appearsInTopics`
+
+## 临时调试时，尽量别用很长的 `python3 -c`
+
+像下面这种 heredoc 方式更稳，不容易被 shell 引号坑到：
+
+```bash
+cd ~/.claude/skills/cherry-chat-research/scripts
+python3 - <<'PY'
+from cherry_history_client import CherryHistoryClient
+
+client = CherryHistoryClient()
+payload = client.search_messages(
+    anyOf=["气感", "养气", "精气神"],
+    exclude=["天气", "语气", "生气"],
+    deduplicate=True,
+    sort="createdAt",
+    order="asc",
+    limit=20,
+)
+
+for hit in payload.get("hits", []):
+    print(hit["messageId"], hit["createdAt"], hit["mainText"][:80])
+PY
+```
+
 ## License
 
 AGPL-3.0

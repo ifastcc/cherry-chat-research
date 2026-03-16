@@ -103,6 +103,30 @@ The skill can draw on these endpoints when it needs them:
 
 These are data primitives, not a fixed workflow. The agent is free to decide how to investigate and how to shape the final output.
 
+The search endpoint now supports these practical parameters:
+
+- `q`: simplest free-text search
+- `phrase`: exact phrase
+- `allOf`: every term must appear
+- `anyOf`: any one of the terms may appear
+- `exclude`: remove obvious noise terms
+- `sort=createdAt|relevance`
+- `order=asc|desc`
+- `deduplicate=true`
+
+Search hits already include:
+
+- `snippet`
+- `mainText`
+- `createdAt`
+- `annotations`
+
+When deduplication is enabled, hits can also include:
+
+- `contentHash`
+- `duplicateCount`
+- `appearsInTopics`
+
 ## How To Check That It Works
 
 Ask the agent to do something small first, for example:
@@ -132,6 +156,30 @@ That gives you:
 - `topics/*.md`
 - `searches/*.md`
 - `manifest.json`
+
+## For ad-hoc debugging, avoid long `python3 -c` one-liners
+
+A heredoc is much less fragile than nested shell quoting:
+
+```bash
+cd ~/.claude/skills/cherry-chat-research/scripts
+python3 - <<'PY'
+from cherry_history_client import CherryHistoryClient
+
+client = CherryHistoryClient()
+payload = client.search_messages(
+    anyOf=["qigan", "yangqi", "jingqishen"],
+    exclude=["weather", "tone", "angry"],
+    deduplicate=True,
+    sort="createdAt",
+    order="asc",
+    limit=20,
+)
+
+for hit in payload.get("hits", []):
+    print(hit["messageId"], hit["createdAt"], hit["mainText"][:80])
+PY
+```
 
 ## Repo Layout
 

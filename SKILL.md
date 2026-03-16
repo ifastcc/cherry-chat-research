@@ -181,10 +181,23 @@ Primary endpoints and what they are for:
 - `POST /history/messages/batch`
   - Batch fetch multiple messages by id. Good when you already have several candidate evidence points and want to compare them together.
 - `GET /history/search/messages`
-  - Message-level search. Hits include both a snippet and the full `mainText`.
+  - Message-level search.
+  - Hits include `snippet`, full `mainText`, `createdAt`, and structural `annotations`.
+  - Supports simple free text through `q`, and structured search through `phrase`, `allOf`, `anyOf`, `exclude`, `sort`, `order`, and optional `deduplicate`.
 
 Use these APIs as building blocks.
 Do not assume any single endpoint is the "correct" research path.
+
+When searching:
+
+- Use `q` for the simplest substring search.
+- Use `phrase` for an exact phrase.
+- Use `allOf` when several terms must all appear.
+- Use `anyOf` when any one of several terms can appear.
+- Use `exclude` to cut obvious noise.
+- Use `deduplicate=true` when repeated content across topics is wasting your result budget.
+- Use `sort=createdAt&order=asc` when you want a timeline.
+- Use `sort=relevance` when you want the strongest matches first.
 
 ## Scripts
 

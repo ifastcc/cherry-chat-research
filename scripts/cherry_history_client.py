@@ -123,9 +123,10 @@ class CherryHistoryClient:
             if not cursor:
                 break
 
-    def search_messages(self, query: str, **params: Any) -> Dict[str, Any]:
+    def search_messages(self, query: str = "", **params: Any) -> Dict[str, Any]:
         payload = dict(params)
-        payload["q"] = query
+        if query:
+            payload["q"] = query
         return self._request("/history/search/messages", payload)
 
     @staticmethod
