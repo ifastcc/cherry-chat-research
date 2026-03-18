@@ -118,6 +118,7 @@ Use the moves that fit the task.
 - Search for motifs, repeated phrases, identities, worries, or names.
 - Read full transcripts where the material feels alive or emotionally charged.
 - Use context windows around important messages when a search hit is too thin by itself.
+- Prefer `returnMode=round` when you need more context than a raw hit but do not want a whole-topic expansion yet.
 - Pull several distant messages together when you need to compare evidence.
 - Look for shifts over time, not just repeated themes.
 - Revise the first impression when the record pushes back.
@@ -184,6 +185,9 @@ Primary endpoints and what they are for:
   - Message-level search.
   - Hits include `snippet`, full `mainText`, `createdAt`, and structural `annotations`.
   - Supports simple free text through `q`, and structured search through `phrase`, `allOf`, `anyOf`, `exclude`, `sort`, `order`, and optional `deduplicate`.
+  - `returnMode=query` keeps the old hit list response.
+  - `returnMode=round` returns grouped rounds with `matchedMessages` plus expanded `messages`.
+  - `returnMode=topic` returns grouped topics with `matchedMessages` plus full topic `messages`.
 
 Use these APIs as building blocks.
 Do not assume any single endpoint is the "correct" research path.
@@ -198,6 +202,9 @@ When searching:
 - Use `deduplicate=true` when repeated content across topics is wasting your result budget.
 - Use `sort=createdAt&order=asc` when you want a timeline.
 - Use `sort=relevance` when you want the strongest matches first.
+- Use `returnMode=round` when the match itself is too thin and you want the containing round immediately.
+- Use `returnMode=topic` only when you intentionally want whole-topic expansion.
+- Keep `deduplicate=true` only with `returnMode=query`.
 
 ## Scripts
 
@@ -206,6 +213,7 @@ When searching:
   - Supports env overrides and local connection-profile auto-discovery.
 - `scripts/analyze_chat_history.py`
   - Exports a raw local research workspace with topic catalogs, readable transcripts, and optional search results.
+  - Search exports support `--search-return-mode query|round|topic`.
   - This script does not generate conclusions. It prepares source material for the model to study.
 
 ## Example
@@ -213,6 +221,7 @@ When searching:
 ```bash
 python scripts/analyze_chat_history.py \
   --topic-limit 20 \
+  --search-return-mode round \
   --search "AI" \
   --search "焦虑" \
   --output-dir /tmp/cherry-chat-research

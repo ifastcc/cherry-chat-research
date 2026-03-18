@@ -113,6 +113,7 @@ The search endpoint now supports these practical parameters:
 - `sort=createdAt|relevance`
 - `order=asc|desc`
 - `deduplicate=true`
+- `returnMode=query|round|topic`
 
 Search hits already include:
 
@@ -121,11 +122,23 @@ Search hits already include:
 - `createdAt`
 - `annotations`
 
+Recommended `returnMode` usage:
+
+- `query`: default mode, returns matching messages only
+- `round`: returns the containing round with `matchedMessages` plus expanded `messages`
+- `topic`: returns matched topics with `matchedMessages` plus full topic `messages`
+
+If you just want enough context quickly, prefer `returnMode=round` before jumping to full transcript reads.
+
 When deduplication is enabled, hits can also include:
 
 - `contentHash`
 - `duplicateCount`
 - `appearsInTopics`
+
+Note:
+
+- `deduplicate=true` is only meant for `returnMode=query`
 
 ## How To Check That It Works
 
@@ -145,6 +158,7 @@ Example:
 ```bash
 python scripts/analyze_chat_history.py \
   --topic-limit 20 \
+  --search-return-mode round \
   --search "AI" \
   --search "anxiety" \
   --output-dir /tmp/cherry-chat-research
@@ -170,14 +184,14 @@ client = CherryHistoryClient()
 payload = client.search_messages(
     anyOf=["qigan", "yangqi", "jingqishen"],
     exclude=["weather", "tone", "angry"],
-    deduplicate=True,
+    returnMode="round",
     sort="createdAt",
     order="asc",
     limit=20,
 )
 
-for hit in payload.get("hits", []):
-    print(hit["messageId"], hit["createdAt"], hit["mainText"][:80])
+for group in payload.get("groups", []):
+    print(group["groupId"], len(group.get("matchedMessages", [])), len(group.get("messages", [])))
 PY
 ```
 

@@ -22,6 +22,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--keyword")
     parser.add_argument("--topic-id", action="append", dest="topic_ids")
     parser.add_argument("--search", action="append", dest="search_queries")
+    parser.add_argument("--search-limit", type=int, default=50)
+    parser.add_argument("--search-return-mode", choices=["query", "round", "topic"], default="query")
     parser.add_argument("--message-limit-per-page", type=int, default=200)
     parser.add_argument("--response-selection", choices=["all", "preferred"], default="all")
     parser.add_argument("--transcript-order", choices=["asc", "desc"], default="asc")
@@ -221,15 +223,88 @@ def render_topic_markdown(topic: Dict[str, Any], transcript: Sequence[Dict[str, 
 
 
 def render_search_markdown(query: str, payload: Dict[str, Any]) -> str:
+    return_mode = safe_text(payload.get("returnMode")) or "query"
     hits = payload.get("hits", [])
+    groups = payload.get("groups", [])
     lines = [
         f"# Search: {query}",
         "",
         "Use these hits as entry points. Search results are not conclusions.",
         "",
-        f"- total: {payload.get('total', len(hits))}",
+        f"- returnMode: {return_mode}",
+        f"- total: {payload.get('total', len(groups) if groups else len(hits))}",
+        f"- matchedMessageCount: {payload.get('matchedMessageCount', len(hits))}",
         "",
     ]
+
+    if return_mode != "query":
+        if not groups:
+            lines.append("- No groups were returned.")
+            return "\n".join(lines)
+
+        for index, group in enumerate(groups, start=1):
+            matched_messages = group.get("matchedMessages") or []
+            context_messages = group.get("messages") or []
+            lines.extend(
+                [
+                    f"## Group {index}",
+                    f"- groupType: `{group.get('groupType', 'N/A')}`",
+                    f"- groupId: `{group.get('groupId', 'N/A')}`",
+                    f"- topic: {group.get('topicName') or group.get('topicId')}",
+                    f"- topicId: `{group.get('topicId', 'N/A')}`",
+                    f"- assistant: {group.get('assistantName') or 'N/A'}",
+                ]
+            )
+            if group.get("segmentId"):
+                lines.append(f"- segmentId: `{group['segmentId']}`")
+            if group.get("roundId"):
+                lines.append(f"- roundId: `{group['roundId']}`")
+            if group.get("roundIndex") is not None:
+                lines.append(f"- roundIndex: {group['roundIndex']}")
+            lines.extend(
+                [
+                    f"- matchedMessages: {len(matched_messages)}",
+                    f"- contextMessages: {len(context_messages)}",
+                    "",
+                    "### Matched Messages",
+                    "",
+                ]
+            )
+
+            if not matched_messages:
+                lines.extend(["_No matched messages were returned for this group._", ""])
+            else:
+                for hit_index, hit in enumerate(matched_messages, start=1):
+                    annotations = hit.get("annotations") or {}
+                    lines.extend(
+                        [
+                            f"#### Hit {hit_index}",
+                            f"- role: `{hit.get('role', 'N/A')}`",
+                            f"- createdAt: {format_iso(hit.get('createdAt'))}",
+                            f"- messageId: `{hit.get('messageId', 'N/A')}`",
+                            f"- segmentId: `{annotations.get('segmentId', 'N/A')}`",
+                            f"- roundId: `{annotations.get('roundId', 'N/A')}`",
+                            "",
+                        ]
+                    )
+
+                    main_text = safe_text(hit.get("mainText"))
+                    if main_text:
+                        lines.extend(["##### Main Text", "", main_text, ""])
+
+                    snippet = safe_text(hit.get("snippet"))
+                    if snippet:
+                        lines.extend(["##### Search Snippet", "", snippet, ""])
+
+            lines.extend(["### Context Messages", ""])
+            if not context_messages:
+                lines.extend(["_No context messages were returned for this group._", ""])
+            else:
+                for message_index, message in enumerate(context_messages, start=1):
+                    lines.append(render_message_markdown(message, message_index))
+
+        return "\n".join(lines)
+
     if not hits:
         lines.append("- No hits were returned.")
         return "\n".join(lines)
@@ -347,10 +422,10 @@ def export_topics(
     return topic_entries
 
 
-def export_searches(output_dir: Path, client: CherryHistoryClient, queries: Sequence[str]) -> List[Dict[str, Any]]:
+def export_searches(output_dir: Path, client: CherryHistoryClient, args: argparse.Namespace) -> List[Dict[str, Any]]:
     search_entries: List[Dict[str, Any]] = []
-    for query in queries:
-        payload = client.search_messages(query, limit=50)
+    for query in args.search_queries or []:
+        payload = client.search_messages(query, limit=args.search_limit, returnMode=args.search_return_mode)
         base_name = slugify(query, "search")
         json_name = f"{base_name}.json"
         md_name = f"{base_name}.md"
@@ -361,9 +436,11 @@ def export_searches(output_dir: Path, client: CherryHistoryClient, queries: Sequ
         search_entries.append(
             {
                 "query": query,
+                "returnMode": payload.get("returnMode", args.search_return_mode),
                 "jsonFile": f"searches/{json_name}",
                 "markdownFile": f"searches/{md_name}",
-                "hitCount": payload.get("total", len(payload.get("hits", []))),
+                "resultCount": payload.get("total", len(payload.get("groups") or payload.get("hits", []))),
+                "matchedMessageCount": payload.get("matchedMessageCount", len(payload.get("hits", []))),
             }
         )
     return search_entries
@@ -385,6 +462,8 @@ def build_manifest(
             "keyword": args.keyword,
             "topicIds": args.topic_ids or [],
             "searchQueries": args.search_queries or [],
+            "searchLimit": args.search_limit,
+            "searchReturnMode": args.search_return_mode,
             "messageLimitPerPage": args.message_limit_per_page,
             "responseSelection": args.response_selection,
             "transcriptOrder": args.transcript_order,
@@ -406,7 +485,7 @@ def main() -> None:
     write_text(output_dir / "catalog.md", render_catalog_markdown(topics))
 
     topic_entries = export_topics(output_dir, topics, client, args)
-    search_entries = export_searches(output_dir, client, args.search_queries or [])
+    search_entries = export_searches(output_dir, client, args)
 
     manifest = build_manifest(output_dir, args, topic_entries, search_entries)
     write_json(output_dir / "manifest.json", manifest)

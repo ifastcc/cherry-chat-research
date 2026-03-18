@@ -108,6 +108,7 @@ export CHERRY_API_KEY=your_api_key
 - `sort=createdAt|relevance`
 - `order=asc|desc`
 - `deduplicate=true`
+- `returnMode=query|round|topic`
 
 搜索命中里会直接带：
 
@@ -116,11 +117,23 @@ export CHERRY_API_KEY=your_api_key
 - `createdAt`
 - `annotations`
 
+`returnMode` 的建议用法：
+
+- `query`: 默认模式，只返回命中的消息
+- `round`: 返回命中消息所在轮，附带 `matchedMessages` 和展开后的 `messages`
+- `topic`: 返回命中 topic，附带 `matchedMessages` 和完整 topic `messages`
+
+如果你只是想快速拉到足够的上下文，优先用 `returnMode=round`，不要一上来就全量 transcript。
+
 如果开了去重，还会带：
 
 - `contentHash`
 - `duplicateCount`
 - `appearsInTopics`
+
+注意：
+
+- `deduplicate=true` 只适合 `returnMode=query`
 
 ## 临时调试时，尽量别用很长的 `python3 -c`
 
@@ -135,14 +148,14 @@ client = CherryHistoryClient()
 payload = client.search_messages(
     anyOf=["气感", "养气", "精气神"],
     exclude=["天气", "语气", "生气"],
-    deduplicate=True,
+    returnMode="round",
     sort="createdAt",
     order="asc",
     limit=20,
 )
 
-for hit in payload.get("hits", []):
-    print(hit["messageId"], hit["createdAt"], hit["mainText"][:80])
+for group in payload.get("groups", []):
+    print(group["groupId"], len(group.get("matchedMessages", [])), len(group.get("messages", [])))
 PY
 ```
 
