@@ -98,6 +98,18 @@ export CHERRY_API_KEY=your_api_key
 
 这些接口只是数据入口，不是固定研究流程。怎么查、先看哪里、最后写成什么样，都由 agent 根据任务自己决定。
 
+`/history/topics` 现在除了 `assistantId`，也支持显式的 `assistantName` 过滤。
+如果你是想看某个助手到底有多少个 topic，不要这样做：
+
+- 先 `list_topics(limit=120)`
+- 再在这一页结果里本地按 `assistantName` 过滤
+
+这只能得到“当前这一页里有多少”，不是全集。正确做法是：
+
+- 已知 id 时，用 `assistantId`
+- 只知道名字时，用 `assistantName`
+- 用 skill 自带 client 时，直接用 `list_topics_by_assistant_name()` 或 `count_topics_by_assistant_name()`
+
 搜索接口现在支持这些常用参数：
 
 - `q`: 最简单的自由文本搜索
@@ -145,17 +157,9 @@ python3 - <<'PY'
 from cherry_history_client import CherryHistoryClient
 
 client = CherryHistoryClient()
-payload = client.search_messages(
-    anyOf=["气感", "养气", "精气神"],
-    exclude=["天气", "语气", "生气"],
-    returnMode="round",
-    sort="createdAt",
-    order="asc",
-    limit=20,
-)
-
-for group in payload.get("groups", []):
-    print(group["groupId"], len(group.get("matchedMessages", [])), len(group.get("messages", [])))
+topics = client.list_topics_by_assistant_name("think_archive")
+print("topic_count=", len(topics))
+print("latest_topic=", topics[0]["topicId"], topics[0].get("topicName"))
 PY
 ```
 

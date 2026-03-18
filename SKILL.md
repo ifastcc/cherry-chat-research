@@ -169,6 +169,9 @@ Primary endpoints and what they are for:
 
 - `GET /history/topics`
   - Topic catalog. Use this to understand the terrain before reading deeply.
+  - Supports `assistantId` and `assistantName` filters.
+  - If you need the topics for one assistant, do not fetch one page and then filter locally by `assistantName`.
+  - Prefer server-side filtering by `assistantName`, or use the client helper `list_topics_by_assistant_name()` which auto-pages to the full result set.
 - `GET /history/topics/:topicId`
   - Topic metadata. Useful when one topic already looks promising and you want the stable summary.
 - `GET /history/topics/:topicId/transcript`
@@ -205,6 +208,12 @@ When searching:
 - Use `returnMode=round` when the match itself is too thin and you want the containing round immediately.
 - Use `returnMode=topic` only when you intentionally want whole-topic expansion.
 - Keep `deduplicate=true` only with `returnMode=query`.
+
+When enumerating topics for a specific assistant:
+
+- Prefer `assistantId` if you already know it.
+- Otherwise use `assistantName` rather than pulling one page and filtering locally.
+- If you are using the bundled Python client, prefer `list_topics_by_assistant_name('think_archive')` or `count_topics_by_assistant_name('think_archive')`.
 
 ## Scripts
 

@@ -103,6 +103,18 @@ The skill can draw on these endpoints when it needs them:
 
 These are data primitives, not a fixed workflow. The agent is free to decide how to investigate and how to shape the final output.
 
+`/history/topics` now supports explicit `assistantName` filtering in addition to `assistantId`.
+If you want to know how many topics belong to one assistant, do not do this:
+
+- fetch one page with `list_topics(limit=120)`
+- then filter that page locally by `assistantName`
+
+That only tells you how many matching topics were present on the current page, not in the full catalog. Prefer:
+
+- `assistantId` when you already know it
+- `assistantName` when you only know the assistant name
+- `list_topics_by_assistant_name()` or `count_topics_by_assistant_name()` when using the bundled client
+
 The search endpoint now supports these practical parameters:
 
 - `q`: simplest free-text search
@@ -181,17 +193,9 @@ python3 - <<'PY'
 from cherry_history_client import CherryHistoryClient
 
 client = CherryHistoryClient()
-payload = client.search_messages(
-    anyOf=["qigan", "yangqi", "jingqishen"],
-    exclude=["weather", "tone", "angry"],
-    returnMode="round",
-    sort="createdAt",
-    order="asc",
-    limit=20,
-)
-
-for group in payload.get("groups", []):
-    print(group["groupId"], len(group.get("matchedMessages", [])), len(group.get("messages", [])))
+topics = client.list_topics_by_assistant_name("think_archive")
+print("topic_count=", len(topics))
+print("latest_topic=", topics[0]["topicId"], topics[0].get("topicName"))
 PY
 ```
 

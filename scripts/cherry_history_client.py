@@ -14,6 +14,8 @@ from typing import Any, Dict, Iterable, Optional
 
 
 class CherryHistoryClient:
+    _ASSISTANT_NAME_FILTER_PROBE = "__codex_assistant_name_filter_probe__"
+
     def __init__(
         self,
         base_url: Optional[str] = None,
@@ -28,6 +30,7 @@ class CherryHistoryClient:
         self.api_key = explicit_api_key or discovered.get("apiKey", "")
         self.timeout = timeout
         self.max_retries = max_retries
+        self._assistant_name_filter_supported: Optional[bool] = None
 
         if not self.base_url:
             raise ValueError("CHERRY_API_BASE_URL is required")
@@ -85,6 +88,51 @@ class CherryHistoryClient:
 
     def list_topics(self, **params: Any) -> Dict[str, Any]:
         return self._request("/history/topics", params)
+
+    def iter_topics(self, **params: Any) -> Iterable[Dict[str, Any]]:
+        page_size = int(params.pop("limit", 200) or 200)
+        offset = int(params.pop("offset", 0) or 0)
+
+        while True:
+            payload = self.list_topics(limit=page_size, offset=offset, **params)
+            topics = payload.get("topics", [])
+            for topic in topics:
+                yield topic
+
+            total = payload.get("total")
+            if not topics:
+                break
+
+            offset += len(topics)
+            if isinstance(total, int) and offset >= total:
+                break
+
+    def list_all_topics(self, **params: Any) -> list[Dict[str, Any]]:
+        return list(self.iter_topics(**params))
+
+    def list_topics_by_assistant_name(self, assistant_name: str, **params: Any) -> list[Dict[str, Any]]:
+        normalized = assistant_name.strip().lower()
+        if not normalized:
+            return []
+
+        if self._supports_topics_assistant_name_filter():
+            return self.list_all_topics(assistantName=assistant_name, **params)
+
+        candidates = self.list_all_topics(keyword=assistant_name, **params)
+        return [topic for topic in candidates if (topic.get("assistantName") or "").strip().lower() == normalized]
+
+    def count_topics_by_assistant_name(self, assistant_name: str, **params: Any) -> int:
+        return len(self.list_topics_by_assistant_name(assistant_name, **params))
+
+    def _supports_topics_assistant_name_filter(self) -> bool:
+        if self._assistant_name_filter_supported is not None:
+            return self._assistant_name_filter_supported
+
+        payload = self.list_topics(limit=1, assistantName=self._ASSISTANT_NAME_FILTER_PROBE)
+        topics = payload.get("topics", [])
+        total = payload.get("total")
+        self._assistant_name_filter_supported = not topics and total in (0, None)
+        return self._assistant_name_filter_supported
 
     def get_topic(self, topic_id: str) -> Dict[str, Any]:
         return self._request(f"/history/topics/{urllib.parse.quote(topic_id, safe='')}")

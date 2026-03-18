@@ -19,6 +19,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", default="/tmp/cherry-chat-research-workspace")
     parser.add_argument("--topic-limit", type=int, default=20)
     parser.add_argument("--assistant-id")
+    parser.add_argument("--assistant-name")
     parser.add_argument("--keyword")
     parser.add_argument("--topic-id", action="append", dest="topic_ids")
     parser.add_argument("--search", action="append", dest="search_queries")
@@ -78,6 +79,14 @@ def collect_topics(client: CherryHistoryClient, args: argparse.Namespace) -> Lis
 
     if chosen:
         return chosen
+
+    if args.assistant_name:
+        topics = client.list_topics_by_assistant_name(
+            args.assistant_name,
+            assistantId=args.assistant_id,
+            keyword=args.keyword,
+        )
+        return topics[: args.topic_limit]
 
     catalog = client.list_topics(limit=args.topic_limit, assistantId=args.assistant_id, keyword=args.keyword)
     topics = catalog.get("topics", [])
@@ -459,6 +468,7 @@ def build_manifest(
         "filters": {
             "topicLimit": args.topic_limit,
             "assistantId": args.assistant_id,
+            "assistantName": args.assistant_name,
             "keyword": args.keyword,
             "topicIds": args.topic_ids or [],
             "searchQueries": args.search_queries or [],
